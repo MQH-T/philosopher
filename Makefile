@@ -5,7 +5,7 @@ PATH_SRC    = src/
 PATH_INC    = includes/
 
 CC          = cc
-FLAGS       = -Wall -Wextra -Werror -g3
+FLAGS       = -Wall -Wextra -Werror -g3 -fPIE
 INCLUDES    = -I $(PATH_INC)
 
 SRC_FILES   = main.c \

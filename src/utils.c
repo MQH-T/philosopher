@@ -45,3 +45,25 @@ int	ft_atoi(const char *str)
 	result = result * sign;
 	return (result);
 }
+
+int ft_isnbr(const char *str)
+{
+	int i;
+	
+	i = 0;
+	while (is_space(str[i]))
+		i++;
+	if (str[i] == '+')
+		i++;
+
+	while(str[i])
+	{
+		if (ft_isdigit(str[i]) != 1)
+		{
+			return(0);
+		}
+		i++;
+	}
+	return(1);
+}
+// refaire un usleep

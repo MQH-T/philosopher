@@ -34,6 +34,13 @@
 // AVEC CES STRATEGIES ON EVITE LES DEADLOCKS 
 
 // STRATEGIES ENCORE PLUS SAFE METTRE UN SERVEUR QUI DONNE LES AUTORISATIONS
+// timestamp_in_ms X has taken a fork
+// ◦ timestamp_in_ms X is eating
+// ◦ timestamp_in_ms X is sleeping
+// ◦ timestamp_in_ms X is thinking
+// ◦ timestamp_in_ms X died
+// Replace timestamp_in_ms with the current timestamp in milliseconds
+// and X with the philosopher number
 
 // ach fork would have a corresponding mutex that ensures only one philosopher can pick up the fork at a time(initialize two mutexes, mutex_fork1 for F1 and mutex_fork2 for F2) 
 // // by using pthread_mutex_init for F1 and pthread_mutex_init for F2
@@ -45,80 +52,116 @@
 
 #include "philo.h"
 
-void* philosopher(void* arg) 
+void* moves(void* arg) 
 {
-    int id;
+    t_philo *p;
 
-    id = *(int *)arg;
+    p = (t_philo *)arg;
+
     while (1) {
-        printf("Philosopher %d is thinking.\n", id);
+        printf("Philosopher %d is thinking.\n", p->id);
         sleep(1); // Thinking
 
-        printf("Philosopher %d is eating.\n", id);
+        printf("Philosopher %d is eating.\n", p->id);
         sleep(1); // Eating
 
-        printf("Philosopher %d is sleeping.\n", id);
+        printf("Philosopher %d is sleeping.\n", p->id);
         sleep(1); // Sleeping
-        printf("FINISHED :%d \n", id);
+        printf("FINISHED :%d \n", p->id);
     }
 }
 
-void launch_philo(char **argv)
+long get_time_ms(void)
 {
-    t_philo philo;
+    struct timeval tv;
     long    seconds;
     long    microseconds;
     long    milliseconds;
-    struct timeval tv;
-    pthread_t  thread1;
-    pthread_t  thread2;
-    int ids[2] = {1,2};
-
-    (void)argv;
 
     gettimeofday(&tv, NULL);
     seconds = tv.tv_sec;
     microseconds = tv.tv_usec;
-    memset(&philo, 0, sizeof(philo));
-    printf("id %d last meal %ld eat count %d\n", philo.id,
-    philo.last_meal_time,
-    philo.eat_count);
     milliseconds = (seconds * 1000) + (microseconds / 1000);
-    usleep(TIME_TO_EAT * 1000);
-    printf("milliseconds %li\n", milliseconds);
-    printf("gettimeofday :%i \n",
-    gettimeofday(&tv, NULL));
-
-    pthread_create(&thread1, NULL, philosopher, &ids[0]); 
-    pthread_create(&thread2, NULL, philosopher, &ids[1]);
-    pthread_join(thread1,NULL);
-    pthread_join(thread2,NULL);
-
-    printf("fini\n");
+    gettimeofday(&tv, NULL);
+    return (milliseconds);
 }
 
+void init_table(t_simulation *table)
+{
+    int i;
+  
+    i = 0;
 
-// It’s important to remember that the number of philosophers must be one or more, the eating time must be greater than zero, and the inputs must be numerical values, not characters.
+    table->forks = malloc(sizeof(pthread_mutex_t) * table->nb_philo);
+    table->philos = malloc(sizeof(t_philo) * table->nb_philo);
+    table->flag_death = 0;
+    pthread_mutex_init(&table->print_mutex, NULL);
+    pthread_mutex_init(&table->death_mutex, NULL);
 
+    while (i < table->nb_philo)
+    {
+        pthread_mutex_init(&table->forks[i], NULL);
+        i++;
+    }
+    i = 0;
+    while (i < table->nb_philo)
+    {
+        table->philos[i].id = i + 1;
+        table->philos[i].eat_count = 0;
+        table->philos[i].left_fork = &table->forks[i];
+        table->philos[i].right_fork = &table->forks[(i + 1) % table->nb_philo];
+        table->philos[i].table = table;
+        i++;
+    }
+
+}
+
+void launch_philo(t_simulation *table, t_philo *my_philosopher)
+{
+    int i;
+    (void) my_philosopher;
+    
+    i = 0;
+    table->start_time = get_time_ms();
+        
+    while(i < table->nb_philo)
+    {
+        table->philos[i].last_meal_time = table->start_time;
+        pthread_create(&table->philos[i].thread, NULL, moves, &table->philos[i]); 
+        i++;
+    }
+     while(i < table->nb_philo)
+          pthread_join(table->philos[i++].thread,NULL);
+  
+}
+    
+    // It’s important to remember that the number of philosophers must be one or more, the eating time must be greater than zero, and the inputs must be numerical values, not characters.
+    
 int main(int argc, char **argv)
 {
     int i;
+    t_philo my_philosopher;
+    t_simulation table;
 
-    // i = 1;
-    // while(i < argc)
-    // {
-    //     if (ft_isdigit() != 1)
-    //     {
-                
-    //          printf("Wrong args please provide 4 unsigned integer!\n");
-    //          return (-1);
-    //     }
-    //     i++;
-    // }
-    i = 0;
-    
-    ft_atoi(argv[i]);
-    if(argc == 5)
-        launch_philo(argv);
- return 0;
+    i = 1;
+        while(i < argc)
+        {
+            if ((ft_atoi(argv[argc])) != 1 )
+                 {
+                    printf("Wrong args please provide 4 unsigned integer!\n");
+                    return (-1);
+                }
+        i++;
+        }
+        if(argc == 5)
+                {
+                    table.nb_philo = ft_atoi(argv[1]);
+                    my_philosopher.time_to_die = ft_atoi(argv[2]);
+                    my_philosopher.time_to_eat = ft_atoi(argv[3]);
+                    my_philosopher.time_to_sleep = ft_atoi(argv[4]);
+                    init_table(&table);
+                    launch_philo(&table, &my_philosopher);
+                }
+        // pthread_mutex_destroy(&my_philosopher.mutex);
+        return 0;
 }
