@@ -8,9 +8,11 @@ CC          = cc
 FLAGS       = -Wall -Wextra -Werror -g3 -fPIE
 INCLUDES    = -I $(PATH_INC)
 
-SRC_FILES   = main.c \
-				utils.c \
-
+SRC_FILES   = utils.c \
+			simulation.c \
+			time.c\
+			main.c \
+	
 OBJ         = $(addprefix $(PATH_SRC), $(SRC_FILES:.c=.o))
 
 all: $(NAME)

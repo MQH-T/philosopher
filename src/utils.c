@@ -1,5 +1,5 @@
-#include <stdio.h>
 #include "philo.h"
+#include <stdio.h>
 
 int	ft_isdigit(int c)
 {
@@ -46,24 +46,25 @@ int	ft_atoi(const char *str)
 	return (result);
 }
 
-int ft_isnbr(const char *str)
+int	ft_isnbr(const char *str)
 {
-	int i;
-	
-	i = 0;
-	while (is_space(str[i]))
-		i++;
-	if (str[i] == '+')
-		i++;
+	int	i;
 
-	while(str[i])
+	i = 0;
+	if (str && !str[i])
 	{
-		if (ft_isdigit(str[i]) != 1)
+		while (is_space(str[i]))
+			i++;
+		if (str[i] == '+')
+			i++;
+		while (str[i])
 		{
-			return(0);
+			if (ft_isdigit(str[i]) != 1)
+			{
+				return (0);
+			}
+			i++;
 		}
-		i++;
 	}
-	return(1);
+	return (1);
 }
-// refaire un usleep
