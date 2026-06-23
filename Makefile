@@ -1,4 +1,4 @@
-NAME        = philosophers
+NAME        = philo
 
 # Dossiers
 PATH_SRC    = src/

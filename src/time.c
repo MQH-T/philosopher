@@ -23,22 +23,23 @@ void	print_status(t_simulation *table, t_philo *my_philo, char *msg)
 {
 	long	start;
 
+	if (death_copy(table) == 1 && ft_strncmp(msg, "died", 4))
+			return ;
 	start = get_time_ms();
 	pthread_mutex_lock(&table->print_mutex);
 	printf("%ld %d %s\n", start - table->start_time, my_philo->id, msg);
 	pthread_mutex_unlock(&table->print_mutex);
 }
 
-void	my_usleep(long ms,t_philo *philos)
+void	my_usleep(long ms, t_philo *philos)
 {
 	long start;
 
 	start = get_time_ms();
 	while (get_time_ms() - start < ms)
 	{
-		usleep(50);
+		if (death_copy(philos->table) == 1)
+			return ;
+		usleep(10);
 	}
-	if (philos->table->flag_death == 1)
-		return;
-	
 }

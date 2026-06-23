@@ -63,6 +63,34 @@
 
 #include "philo.h"
 
+void	init_forks(t_simulation *table)
+{
+	int	i;
+
+	i = 0;
+	while (i < table->nb_philo)
+	{
+		table->philos[i].id = i + 1;
+		table->philos[i].eat_count = 0;
+		table->philos[i].left_fork = &table->forks[i];
+		table->philos[i].right_fork = &table->forks[(i + 1) % table->nb_philo];
+		table->philos[i].table = table;
+		pthread_mutex_init(&table->philos[i].personal_mutex, NULL);
+
+		if (table->philos[i].id % 2 == 0)
+		{
+			table->philos[i].first_fork = table->philos[i].left_fork;
+			table->philos[i].second_fork = table->philos[i].right_fork;
+		}
+		else
+		{
+			table->philos[i].first_fork = table->philos[i].right_fork;
+			table->philos[i].second_fork = table->philos[i].left_fork;
+		}
+		i++;
+	}
+}
+
 void	init_table(t_simulation *table)
 {
 	int	i;
@@ -71,30 +99,22 @@ void	init_table(t_simulation *table)
 	table->forks = malloc(sizeof(pthread_mutex_t) * table->nb_philo);
 	table->philos = malloc(sizeof(t_philo) * table->nb_philo);
 	table->flag_death = 0;
-	pthread_mutex_init(&table->print_mutex, NULL); 
+	table->number_of_times_each_philosopher_must_eat = -1;
+	pthread_mutex_init(&table->print_mutex, NULL);
 	pthread_mutex_init(&table->death_mutex, NULL);
 	while (i < table->nb_philo)
 	{
-		pthread_mutex_init(&table->forks[i], NULL); //pthread_mutex_init sur chaque fourchette (tableau de N mutexes), plus le mutex print, plus le mutex d'état.
+		pthread_mutex_init(&table->forks[i], NULL);
 		i++;
 	}
-	i = 0;
-	while (i < table->nb_philo)
-	{ 
-		table->philos[i].id = i + 1;
-		table->philos[i].eat_count = 0;
-		table->philos[i].left_fork = &table->forks[i];
-		table->philos[i].right_fork = &table->forks[(i + 1) % table->nb_philo];//les philos partagent les fourchettes
-		table->philos[i].table = table;
-		i++;
-	}
+	init_forks(table);
 }
 
-void end_philosophers(t_simulation *table)
+void	end_philosophers(t_simulation *table)
 {
-	int i;
-	(void) table;
+	int	i;
 
+	(void)table;
 	i = 0;
 	while (i < table->nb_philo)
 	{
@@ -112,12 +132,11 @@ int	main(int argc, char **argv)
 
 	i = 1;
 
-	if (argc == 5  || argc == 6)
+	if (argc == 5 || argc == 6)
 	{
-		
 		while (i < argc)
 		{
-			if ((ft_isnbr(argv[argc])) != 1)
+			if ((ft_isnbr(argv[i])) != 1)
 			{
 				printf("Wrong args please provide 4 unsigned integer!\n");
 				return (-1);
@@ -128,12 +147,12 @@ int	main(int argc, char **argv)
 		table.time_to_die = ft_atoi(argv[2]);
 		table.time_to_eat = ft_atoi(argv[3]);
 		table.time_to_sleep = ft_atoi(argv[4]);
-		if(argv[5])
-			table.number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
+
 		init_table(&table);
-		launch_philo(&table); //il faut que my philo pointe sur table?
-		
+		if (argv[5])
+			table.number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
+		launch_philo(&table);
 	}
-	
+
 	return (0);
 }

@@ -17,102 +17,120 @@ void	launch_philo(t_simulation *table)
 
 	i = 0;
 	table->start_time = get_time_ms();
-	
 	while (i < table->nb_philo)
 	{
 		table->philos[i].last_meal_time = table->start_time;
 		pthread_create(&table->philos[i].thread, NULL, moves,
 			&table->philos[i]);
 		i++;
-		// my_usleep(100,table->philos);
-		if (table->philos->id % 2 == 0)
-		{
-			table->philos->first_fork = table->philos->left_fork;
-			table->philos->first_fork = table->philos->right_fork;
-		}
-		else
-		{
-			table->philos->first_fork = table->philos->right_fork;
-			table->philos->first_fork = table->philos->left_fork;
-		}	
 	}
 	monitor(table);
+	monitor_meals(table);
 	i = 0;
 	while (i < table->nb_philo)
 		pthread_join(table->philos[i++].thread, NULL);
 	end_philosophers(table);
 }
-void odd_philosophers(t_philo	*philos)
+void	only_one_philo(t_philo *philos)
 {
-	(void) philos;
-	return;
+	print_status(philos->table, philos, "is thinking");
+	my_usleep(1, philos);
+	pthread_mutex_lock(philos->first_fork);
+	print_status(philos->table, philos, "has taken a fork");
+	pthread_mutex_unlock(philos->first_fork);
+	return ;
 }
-
 
 void	*moves(void *arg)
 {
 	t_philo	*philos;
 
 	philos = (t_philo *)arg;
+	if (philos->table->nb_philo == 1)
+	{
+		only_one_philo(philos);
+		return (NULL);
+	}
 	while (1)
 	{
-		if (philos->table->flag_death == 1)
-			break;
+		if (death_copy(philos->table) == 1)
+			break ;
+		if (monitor_meals(philos->table) == 1)
+			break ;
 		print_status(philos->table, philos, "is thinking");
-		my_usleep(1,philos);
-
-		//prendre les fourchettes
+		my_usleep(1, philos);
 		pthread_mutex_lock(philos->first_fork);
 		print_status(philos->table, philos, "has taken a fork");
 		pthread_mutex_lock(philos->second_fork);
 		print_status(philos->table, philos, "has taken a fork");
-		
 		print_status(philos->table, philos, "is eating");
 		pthread_mutex_lock(&philos->personal_mutex);
 		philos->last_meal_time = get_time_ms();
-		my_usleep(philos->table->time_to_eat,philos);
-		pthread_mutex_unlock(&philos->personal_mutex);
 		philos->eat_count++;
-		pthread_mutex_unlock(philos->left_fork);
-		pthread_mutex_unlock(philos->right_fork);
-		
+		pthread_mutex_unlock(&philos->personal_mutex);
+		my_usleep(philos->table->time_to_eat, philos);
+		pthread_mutex_unlock(philos->first_fork);
+		pthread_mutex_unlock(philos->second_fork);
 		print_status(philos->table, philos, "is sleeping");
-		my_usleep(philos->table->time_to_sleep,philos);
+		my_usleep(philos->table->time_to_sleep, philos);
 	}
-	return NULL;
+	return (NULL);
 }
 
+int	death_copy(t_simulation *table)
+{
+	int	flag_copy;
+
+	pthread_mutex_lock(&table->death_mutex);
+	flag_copy = table->flag_death;
+	pthread_mutex_unlock(&table->death_mutex);
+	return (flag_copy);
+}
 void	monitor(t_simulation *table)
 {
-	int i;
+	int		i;
+	long	last_time_cpy;
 
-	i = 0;
-	if (table->nb_philo == 1)
+	while (death_copy(table) != 1)
 	{
-		print_status(table, table->philos, "died");
-		pthread_mutex_unlock(&table->print_mutex);
-		return;
-	}
-	while (table->flag_death != 1)
-	{
+		i = 0;
 		while (i < table->nb_philo)
 		{
-			if (table->time_to_die < get_time_ms() - table->philos[i].last_meal_time)
+			pthread_mutex_lock(&table->philos[i].personal_mutex);
+			last_time_cpy = table->philos[i].last_meal_time;
+			pthread_mutex_unlock(&table->philos[i].personal_mutex);
+			if (table->time_to_die < get_time_ms() - last_time_cpy)
 			{
 				pthread_mutex_lock(&table->death_mutex);
 				table->flag_death = 1;
 				pthread_mutex_unlock(&table->death_mutex);
-				print_status(table, table->philos, "died");
-				return;
+				print_status(table, &table->philos[i], "died");
+				return ;
 			}
 			i++;
 		}
-		my_usleep(100,table->philos);
+		usleep(100);
 	}
 }
 
-		// if (table->philos->id % 2 == 0)
-		// {
-  		// 	my_usleep(150,table->philos);
-		// 	odd_philosophers(table->philos);
-		// }
+int	monitor_meals(t_simulation *table)
+{
+	int i;
+	i = 0;
+	if (table->number_of_times_each_philosopher_must_eat != -1)
+	{
+		while (i < table->nb_philo)
+		{
+			pthread_mutex_lock(&table->philos[i].personal_mutex);
+
+			if (table->philos[i].eat_count < table->number_of_times_each_philosopher_must_eat)
+			{
+				pthread_mutex_unlock(&table->philos[i].personal_mutex);
+				return (0);
+			}
+			pthread_mutex_unlock(&table->philos[i].personal_mutex);
+			i++;
+		}
+	}
+	return (1);
+}
