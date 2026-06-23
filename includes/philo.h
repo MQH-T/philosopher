@@ -10,6 +10,12 @@
 # include <time.h>
 # include <unistd.h>
 
+// typedef enum e_way {
+// 	LEFT,
+// 	RIGHT
+// } t_eway;
+
+
 typedef struct s_philo	t_philo;
 
 typedef struct s_simulation
@@ -17,8 +23,8 @@ typedef struct s_simulation
 	int					nb_philo;
 	int					number_of_times_each_philosopher_must_eat;
 	long				start_time;
-	t_philo *philos;        // tableau de N philos (malloc)
-	pthread_mutex_t *forks; // tableau de N mutexes (malloc)
+	t_philo				*philos;
+	pthread_mutex_t		*forks;
 	int					flag_death;
 
 	pthread_mutex_t		print_mutex;
@@ -34,9 +40,11 @@ typedef struct s_philo
 	long				last_meal_time;
 	int					eat_count;
 	pthread_t			thread;
-	pthread_mutex_t		mutex;
-	pthread_mutex_t *left_fork; // les forks ont des mutex pour les securiser
+	pthread_mutex_t		personal_mutex;
+	pthread_mutex_t *left_fork;
 	pthread_mutex_t		*right_fork;
+	pthread_mutex_t	*first_fork;
+	pthread_mutex_t	*second_fork;
 	t_simulation		*table;
 }						t_philo;
 
@@ -52,5 +60,7 @@ void					*moves(void *arg);
 void					print_status(t_simulation *table, t_philo *my_philo,
 							char *msg);
 void					monitor(t_simulation *table);
-void					my_usleep(long ms);
+void					odd_philosophers(t_philo *philos);
+void					my_usleep(long ms, t_philo *my_philo);
+
 #endif

@@ -112,7 +112,7 @@ int	main(int argc, char **argv)
 
 	i = 1;
 
-	if (argc == 5)
+	if (argc == 5  || argc == 6)
 	{
 		
 		while (i < argc)
@@ -128,10 +128,12 @@ int	main(int argc, char **argv)
 		table.time_to_die = ft_atoi(argv[2]);
 		table.time_to_eat = ft_atoi(argv[3]);
 		table.time_to_sleep = ft_atoi(argv[4]);
+		if(argv[5])
+			table.number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
 		init_table(&table);
-		monitor(&table);
 		launch_philo(&table); //il faut que my philo pointe sur table?
+		
 	}
-	// end_philosophers(&table, &my_philosopher);
+	
 	return (0);
 }
